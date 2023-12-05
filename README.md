@@ -1,10 +1,10 @@
 # MERN stack E-commerce project
 
-## Enviroment setup
-## Express server setup
+- Enviroment setup
+- Express server setup
 
 
-### packages
+## packages
 
 ```shell 
   #express #nodemon #morgan
