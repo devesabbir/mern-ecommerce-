@@ -4,7 +4,7 @@
 - Express server setup
 
 
-## packages
+## Packages
 
 ```shell 
   #express #nodemon #morgan
