@@ -1,20 +1,53 @@
 const mongoose = require('mongoose');
+const bcrypt = require('bcryptjs');
 
 const userSchema = new mongoose.Schema({
+    name: {
+       type: String,
+       required: true,
+    },
     userName:{
         type:String,
-        required:true,
-        unique:true
+        required:[true, 'Username is required!'],
+        unique:true,
+        trim:true,
     },
     email:{
         type:String,
-        required:true,
-        unique:true
+        required:[true, 'Email is required!'],
+        unique:true,
+        validate: {
+           validator: function (value) { 
+              return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+           },
+           message: 'Invalid email format',
+        }
     },
-   password: {
-     type:String,
-     required:true,
-   }
+    phone: {
+       type: String,
+    },
+    password: {
+       type: String,
+       required: true,
+       minlength: 6, // Example: Minimum password length is 6 characters
+       set:function(value) {
+          return bcrypt.hashSync(value, bcrypt.genSaltSync(10))
+       }
+    },
+    image:{
+       type: String,
+    },
+    address: {
+       type: String,
+    },
+     isAdmin : {
+         type: Boolean,
+         default: false,
+    },
+    isBanned : {
+       type: Boolean,
+       default: false,
+    }
 }, 
 { 
   timestamps: true
@@ -22,4 +55,5 @@ const userSchema = new mongoose.Schema({
 
 
 const User = mongoose.model('User', userSchema)
+
 module.exports = User;
