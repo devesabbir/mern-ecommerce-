@@ -2,6 +2,7 @@ const createError = require('http-errors')
 const app = require("./src/app")
 const connectDB = require("./src/config/db")
 const { serverPort } = require('./src/secret')
+const { errorResponse } = require('./src/controllers/ResponsController/ResponsController')
 
 // client side error handler
 app.use((req, res, next) => {
@@ -11,9 +12,7 @@ app.use((req, res, next) => {
 // server side error handler
 app.use((err, req, res, next) => {
     console.error(err.stack)
-    res.status(err.status || 500).json({
-       message:err.message 
-    })
+    return errorResponse(res, {statusCode:err.status, message:err.message})
 })
  
 
