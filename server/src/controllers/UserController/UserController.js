@@ -4,9 +4,10 @@ const User = require("../../models/UserModel/UserModel");
 const findItemById = require('../../services/findItem');
 const { successResponse } = require('../ResponsController/ResponsController');
 const deleteImage = require('../../helper/DeleteImage');
-const {jwtSecret } = require('../../secret');
+const {jwtSecret, clientURL } = require('../../secret');
 const { CreateToken, VerifyToken } = require('../../helper/webToken');
-
+const emailWithNodeMailer = require('../../helper/Email');
+const createHttpError = require('http-errors');
 
 
 
@@ -19,12 +20,30 @@ const ProcessRegister = async (req, res, next) => {
      }
 
      if (!existUser) {
-         const token = CreateToken({email:email}, jwtSecret, 5) 
-         const decoded = VerifyToken(token, jwtSecret)
+         
+        const token = CreateToken({...req.body}, jwtSecret, 5) 
+        
+        // Prepare email
+        const emailData = {
+          email: email,
+          subject: 'Account Activation mail',
+          html: `
+            <h2>Hello ${name} ! </h2>
+            <p>Please click here to <a href="${clientURL}/users/verify-register/${token}" target="_blank" > Active 
+            your account </a></p>
+          
+          `
+        }
 
-        successResponse(res,201, {
-        message: 'Data Successfully Registered',
-        data:decoded,
+         try {
+           await emailWithNodeMailer(emailData)
+         } catch (error) {
+            next(createHttpError(500, 'Failed to send verification email'))
+         }
+
+
+       return successResponse(res,201, {
+        message: 'Please check your verification mail',
         token:token
      })
      }
@@ -35,6 +54,31 @@ const ProcessRegister = async (req, res, next) => {
 
 }
 
+
+const VerifyRegister = async (req, res, next) => {
+  
+   try {
+     const { token } = req?.params
+
+     if (!token) throw createHttpError(404, 'Token required!')
+
+     const decode = await VerifyToken(token, jwtSecret)
+
+     if (!decode) throw createHttpError(401, 'Unable to verify token')
+
+     const baseUserName = decode.name.trim().replace(/\s/g, '_') + Date.now()
+     const user = await User.create({...decode, userName:baseUserName})
+      
+     return successResponse(res,200, {
+      message: 'User created successfully',
+      user:user
+   })
+     
+   
+   } catch (err) {
+      next(err);
+   }
+}
 
 /**
  * 
@@ -75,7 +119,7 @@ const GetUsers = async (req, res, next) => {
       const count = await User.find(filter, options).estimatedDocumentCount()
 
       if (users) {
-        successResponse(res, 200, {
+        return successResponse(res, 200, {
           message: 'Get Users successfully',
           data: users,
           pagination: {
@@ -110,7 +154,7 @@ const GetUser = async (req, res, next) => {
     }
     const user = await findItemById(User, id, options)
     if (user) 
-    successResponse(res, 200, {
+    return successResponse(res, 200, {
        message: 'Get User successfully',
        data: user,
       }
@@ -150,7 +194,7 @@ const DeleteUser = async (req, res, next) => {
 
     if (user) {
         const {password, ...items} = user._doc
-        successResponse(res, 200, {
+      return  successResponse(res, 200, {
           message: 'Delete User successfully',
           data:items,
         })
@@ -165,6 +209,7 @@ const DeleteUser = async (req, res, next) => {
 
 module.exports = {
     ProcessRegister,
+    VerifyRegister,
     GetUsers,
     GetUser,
     DeleteUser
