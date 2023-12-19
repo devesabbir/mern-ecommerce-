@@ -1,11 +1,11 @@
 const createError = require('http-errors')
-const mongoose  = require('mongoose');
+const jwt = require('jsonwebtoken');
 const User = require("../../models/UserModel/UserModel");
 const findItemById = require('../../services/findItem');
 const { successResponse } = require('../ResponsController/ResponsController');
-const deleteImage = require('../../helper/deleteImage');
-
-
+const deleteImage = require('../../helper/DeleteImage');
+const {jwtSecret } = require('../../secret');
+const { CreateToken, VerifyToken } = require('../../helper/webToken');
 
 
 
@@ -19,18 +19,21 @@ const ProcessRegister = async (req, res, next) => {
      }
 
      if (!existUser) {
+         const token = CreateToken({email:email}, jwtSecret, 5) 
+         const decoded = VerifyToken(token, jwtSecret)
+
         successResponse(res,201, {
         message: 'Data Successfully Registered',
-        data:existUser,
+        data:decoded,
+        token:token
      })
      }
    } 
-   catch (err) {
+   catch (err) { 
       next(err);
    }
 
 }
-
 
 
 /**

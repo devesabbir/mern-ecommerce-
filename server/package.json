@@ -19,6 +19,7 @@
     "express-rate-limit": "^7.1.5",
     "express-sanitizer": "^1.0.6",
     "http-errors": "^2.0.0",
+    "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.0.2"
   },
   "devDependencies": {
