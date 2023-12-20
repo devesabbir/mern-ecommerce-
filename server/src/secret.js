@@ -6,6 +6,7 @@ const jwtSecret = process.env.JWT_SECRET || 'sabbir'
 const smtUserName = process.env.SMTP_USERNAME
 const smtPassword = process.env.SMTP_PASSWORD
 const clientURL = process.env.CLIENT_URL
+const uploadDIR = process.env.UPLOAD_DIR || './public/images/users'
 
 
 
@@ -15,5 +16,7 @@ module.exports = {
     jwtSecret,
     smtUserName,
     smtPassword,
-    clientURL
+    clientURL,
+    uploadDIR
+
 }

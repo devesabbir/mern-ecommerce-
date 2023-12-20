@@ -11,10 +11,15 @@ const createHttpError = require('http-errors');
 
 
 
+
 const ProcessRegister = async (req, res, next) => {
+   
+
+
    try {
      const { name, email, password, phone, address} = req.body
      const existUser = await User.findOne({ email:{$eq: email}})
+
      if (existUser) {
         throw createError(409, 'User Already Registered')
      }
@@ -52,33 +57,40 @@ const ProcessRegister = async (req, res, next) => {
       next(err);
    }
 
-}
+} 
 
 
 const VerifyRegister = async (req, res, next) => {
-  
+   
    try {
      const { token } = req?.params
-
      if (!token) throw createHttpError(404, 'Token required!')
 
-     const decode = await VerifyToken(token, jwtSecret)
+     try {
+      const decode = await VerifyToken(token, jwtSecret)
+      if (!decode) throw createHttpError(401, 'Unable to verify token')
 
-     if (!decode) throw createHttpError(401, 'Unable to verify token')
-
-     const baseUserName = decode.name.trim().replace(/\s/g, '_') + Date.now()
-     const user = await User.create({...decode, userName:baseUserName})
+      const baseUserName = decode.name.trim().replace(/\s/g, '_') + Date.now()
+      const user = await User.create({...decode, userName:baseUserName})
       
-     return successResponse(res,200, {
+      return successResponse(res,200, {
       message: 'User created successfully',
       user:user
    })
-     
-   
+     } catch (err) {
+       if (err.name === "TokenExpiredError") {
+        throw createHttpError(401, 'Token expired!')
+       } else if (err.name === "JsonWebTokenError") {
+        throw createHttpError(401, 'Invalid Token!')
+       }  else {
+         throw err;
+       } 
+     }    
    } catch (err) {
       next(err);
    }
-}
+} 
+
 
 /**
  * 
@@ -178,12 +190,8 @@ const GetUser = async (req, res, next) => {
 const DeleteUser = async (req, res, next) => {
   try { 
     const id = req.params.id;
-   
-    
     const user = await User.findByIdAndDelete(id);
-
     const userImagePath = user?.image;
-    
     if (userImagePath) {
       await deleteImage(userImagePath)
     }

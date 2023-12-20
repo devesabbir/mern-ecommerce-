@@ -11,11 +11,10 @@ app.use((req, res, next) => {
  
 // server side error handler
 app.use((err, req, res, next) => {
-    console.error(err.stack)
     return errorResponse(res, {statusCode:err.status, message:err.message})
 })
  
-
+ 
 app.listen(serverPort, async (err) => {
     // connect to Database
    await connectDB() 
